@@ -1,0 +1,40 @@
+flowchart TD
+    Start([Agent Request]) --> CheckForced{failure_mode<br/>parameter?}
+
+    CheckForced -->|Yes| ForcedMode[Execute Specific<br/>Failure Mode]
+    CheckForced -->|No| CheckProbabilistic{PROBABILISTIC_FAILURES<br/>enabled?}
+
+    CheckProbabilistic -->|No| Normal[Normal Processing]
+    CheckProbabilistic -->|Yes| InitSession[Initialize/Update<br/>Session State]
+
+    InitSession --> CheckCooldown{Last failure<br/>< 30 seconds ago?}
+
+    CheckCooldown -->|Yes| Normal
+    CheckCooldown -->|No| EvaluateProbabilities[Check Each Failure Mode<br/>Against Base Probability × Multiplier]
+
+    EvaluateProbabilities -->|Failure Triggered| UpdateSession[Update Session:<br/>failure_count++<br/>last_failure_time = now]
+    EvaluateProbabilities -->|No Failure| Normal
+
+    UpdateSession --> RandomMode[Execute Selected<br/>Failure Mode]
+
+    ForcedMode --> SelectResponse[Randomly Select Response<br/>from Failure Mode Options]
+    RandomMode --> SelectResponse
+
+    SelectResponse --> End([Return Failed Response])
+    Normal --> End2([Return Normal LLM Response])
+
+    %% Configuration Notes
+    Start -.-> ConfigNote["CONFIG:<br/>PROBABILISTIC_FAILURES env var<br/>FAILURE_RATE_MULTIPLIER env var<br/>30-second cooldown period"]
+
+    %% Styling
+    classDef startEnd fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef decision fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef process fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef failure fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef config fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+
+    class Start,End,End2 startEnd
+    class CheckForced,CheckProbabilistic,CheckCooldown decision
+    class InitSession,EvaluateProbabilities,UpdateSession,SelectResponse,ForcedMode,RandomMode process
+    class Normal failure
+    class ConfigNote config

@@ -1,0 +1,30 @@
+# Core FastAPI dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+aiofiles==23.2.1
+
+# HTTP client for tests
+httpx==0.25.2
+
+# Database drivers (asyncpg is the main one, psycopg2 is backup)
+asyncpg==0.29.0
+sqlalchemy==2.0.23
+
+# Redis
+redis==5.0.1
+
+# AI and utilities
+openai==1.3.7
+tiktoken==0.5.2
+
+# Logging
+structlog==23.2.0
+python-json-logger==2.0.7
+
+# Test output formatting
+rich==13.7.0
+
+# PostgreSQL driver (comment out if problematic)
+# psycopg2-binary==2.9.9

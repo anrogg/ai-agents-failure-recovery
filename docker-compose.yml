@@ -1,0 +1,56 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: agent_failures
+      POSTGRES_USER: agent_user
+      POSTGRES_PASSWORD: agent_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent_user -d agent_failures"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  agent-service:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://agent_user:agent_password@postgres:5432/agent_failures
+      - AI_API_KEY=<AI_API_KEY_PLACEHOLDER>
+      - AI_BASE_URL=<AI_BASE_URL_PLACEHOLDER>
+      - AI_MODEL=<AI_MODEL_PLACEHOLDER>
+      - AI_ENCODING=cl100k_base
+      - FAILURE_MODE=normal
+      - LOG_LEVEL=INFO
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+
+volumes:
+  redis_data:
+  postgres_data:
