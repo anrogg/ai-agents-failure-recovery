@@ -24,7 +24,7 @@ This system deliberately injects 11 different types of failures into AI agents t
 
 ```bash
 # Clone and start the system
-git clone https://github.com/yourusername/ai-agents-failure-recovery
+git clone https://github.com/anrogg/ai-agents-failure-recovery
 cd ai-agents-failure-recovery
 docker-compose up --build
 
