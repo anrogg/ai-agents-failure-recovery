@@ -4,6 +4,7 @@ import asyncio
 from typing import Dict, Any, Optional, Tuple
 import structlog
 from .models import FailureMode, FailureType
+from .metrics import metrics_collector
 
 logger = structlog.get_logger(__name__)
 
@@ -200,26 +201,32 @@ class FailureInjector:
     
     async def inject_output_quality_failure(self, session_id: str, failure_mode: FailureMode, original_response: str) -> str:
         config = self.failure_scenarios[failure_mode]
-        
+
+        # Record the failure injection in metrics
+        metrics_collector.record_failure_injection(failure_mode.value, "default")
+
         if failure_mode == FailureMode.HALLUCINATION:
             hallucinated_response = random.choice(config["responses"])
             logger.warning("Injecting hallucination", session_id=session_id, original_length=len(original_response))
             return hallucinated_response
-        
+
         elif failure_mode == FailureMode.INCORRECT_REASONING:
             incorrect_response = random.choice(config["logic_errors"])
             logger.warning("Injecting incorrect reasoning", session_id=session_id)
             return incorrect_response
-        
+
         elif failure_mode == FailureMode.OFF_TOPIC:
             off_topic_response = random.choice(config["off_topic_responses"])
             logger.warning("Injecting off-topic response", session_id=session_id)
             return off_topic_response
-        
+
         return original_response
     
     async def inject_behavioral_failure(self, session_id: str, failure_mode: FailureMode, message: str) -> str:
         config = self.failure_scenarios[failure_mode]
+
+        # Record the failure injection in metrics
+        metrics_collector.record_failure_injection(failure_mode.value, "default")
 
         if failure_mode == FailureMode.INFINITE_LOOP:
             loop_response = random.choice(config["loop_responses"])
@@ -235,6 +242,9 @@ class FailureInjector:
     
     async def inject_integration_failure(self, session_id: str, failure_mode: FailureMode) -> Exception:
         config = self.failure_scenarios[failure_mode]
+
+        # Record the failure injection in metrics
+        metrics_collector.record_failure_injection(failure_mode.value, "default")
 
         if failure_mode == FailureMode.API_TIMEOUT:
             timeout_range = config.get("timeout_range", (5, 15))
@@ -252,6 +262,9 @@ class FailureInjector:
     
     async def inject_resource_failure(self, session_id: str, failure_mode: FailureMode, token_count: int) -> Exception:
         config = self.failure_scenarios[failure_mode]
+
+        # Record the failure injection in metrics
+        metrics_collector.record_failure_injection(failure_mode.value, "default")
 
         if failure_mode == FailureMode.TOKEN_LIMIT:
             threshold = config.get("token_threshold", 1000)

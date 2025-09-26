@@ -11,6 +11,7 @@ from .models import AgentRequest, AgentResponse, InteractionStatus, FailureMode,
 from .failure_injector import FailureInjector
 from .redis_client import StateManager
 from .database import AgentInteraction, get_db_session
+from .metrics import metrics_collector, track_agent_performance
 
 logger = structlog.get_logger(__name__)
 
@@ -53,7 +54,8 @@ class CustomerServiceAgent:
         except ValueError:
             logger.warning(f"Unknown encoding '{encoding_name}', falling back to cl100k_base")
             self.encoding = tiktoken.get_encoding("cl100k_base")
-        
+
+    @track_agent_performance(failure_type="chat_completion")
     async def process_request(self, request: AgentRequest, db_session: AsyncSession) -> AgentResponse:
         start_time = time.time()
         
@@ -210,9 +212,20 @@ class CustomerServiceAgent:
                 max_tokens=min(request.max_tokens or 500, 500),
                 temperature=0.7
             )
-            
-            logger.info("LLM API call successful", 
-                       session_id=request.session_id, 
+
+            # Add token tracking if you have access to usage data
+            try:
+                if hasattr(response, 'usage') and response.usage:
+                    metrics_collector.record_token_usage(
+                        model=request.model or "gpt-3.5-turbo",
+                        prompt_tokens=response.usage.prompt_tokens,
+                        completion_tokens=response.usage.completion_tokens
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to record token metrics: {e}")
+
+            logger.info("LLM API call successful",
+                       session_id=request.session_id,
                        response_length=len(response.choices[0].message.content) if response.choices else 0)
             
             agent_response = response.choices[0].message.content
@@ -230,10 +243,13 @@ class CustomerServiceAgent:
             )
             
         except openai.APITimeoutError as e:
+            metrics_collector.record_failure_injection("api_timeout", "natural")
             return await self._handle_api_timeout(request, str(e))
         except openai.RateLimitError as e:
+            metrics_collector.record_failure_injection("rate_limiting", "natural")
             return await self._handle_rate_limit(request, str(e))
         except Exception as e:
+            metrics_collector.record_failure_injection("unknown_error", "natural")
             logger.error("OpenAI API error", session_id=request.session_id, error=str(e))
             return AgentResponse(
                 session_id=request.session_id,
@@ -259,7 +275,10 @@ class CustomerServiceAgent:
     ) -> AgentResponse:
         agent_state["failure_count"] += 1
         await self.state_manager.track_failure_count(request.session_id)
-        
+
+        # Record the failure injection in metrics
+        metrics_collector.record_failure_injection(failure_mode.value, "injected")
+
         try:
             failure_type = self.failure_injector.failure_scenarios[failure_mode]["type"]
             

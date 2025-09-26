@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
+from fastapi.responses import Response, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 from typing import List, Optional, Dict, Any
 import uuid
 import structlog
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from .models import AgentRequest, AgentResponse, FailureScenario, SystemMetric, FailureMode
 from .agent_service import CustomerServiceAgent
 from .database import get_db_session, AgentInteraction, FailureScenario as DBFailureScenario, SystemMetric as DBSystemMetric
 from .redis_client import StateManager
+from .metrics import metrics_collector
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -191,6 +194,80 @@ async def test_failure_mode(
     except Exception as e:
         logger.error("Failure test error", failure_mode=failure_mode, error=str(e))
         raise HTTPException(status_code=500, detail=f"Test error: {str(e)}")
+
+
+
+@router.get("/health")
+async def health_check(db: AsyncSession = Depends(get_db_session)):
+    """Health check endpoint with real system checks"""
+    health_status = {"status": "healthy", "checks": {}}
+    overall_healthy = True
+
+    try:
+        # Check database connection
+        try:
+            await db.execute(text("SELECT 1"))
+            health_status["checks"]["database"] = {"status": "healthy"}
+        except Exception as e:
+            health_status["checks"]["database"] = {"status": "unhealthy", "error": str(e)}
+            overall_healthy = False
+
+        # Check Redis connection
+        try:
+            await state_manager.redis.ping()
+            health_status["checks"]["redis"] = {"status": "healthy"}
+        except Exception as e:
+            health_status["checks"]["redis"] = {"status": "unhealthy", "error": str(e)}
+            overall_healthy = False
+
+        # Check LLM service
+        try:
+            import time
+            start_time = time.time()
+
+            base_url_str = str(agent.openai_client.base_url)
+            if "deepseek" in base_url_str:
+                test_model = "deepseek-chat"
+            else:
+                test_model = "gpt-3.5-turbo"
+
+            test_response = await agent.openai_client.chat.completions.create(
+                model=test_model,
+                messages=[{"role": "user", "content": "ping"}],
+                max_tokens=5,
+                temperature=0.1
+            )
+
+            response_time = int((time.time() - start_time) * 1000)
+            health_status["checks"]["llm"] = {
+                "status": "healthy",
+                "response_time_ms": response_time,
+                "model": test_response.model if hasattr(test_response, 'model') else 'unknown'
+            }
+        except Exception as e:
+            health_status["checks"]["llm"] = {"status": "unhealthy", "error": str(e)}
+            overall_healthy = False
+
+        # Update overall status
+        health_status["status"] = "healthy" if overall_healthy else "unhealthy"
+
+        # Update system health metrics
+        db_connections = 1 if health_status["checks"]["database"]["status"] == "healthy" else 0
+        redis_healthy = health_status["checks"]["redis"]["status"] == "healthy"
+
+        metrics_collector.update_system_health(
+            db_connections=db_connections,
+            redis_healthy=redis_healthy
+        )
+
+        status_code = status.HTTP_200_OK if overall_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        return JSONResponse(content=health_status, status_code=status_code)
+    except Exception as e:
+        logger.error("Health check error", error=str(e))
+        return JSONResponse(
+            content={"status": "unhealthy", "error": str(e)},
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
 
 
 @router.get("/system/status")

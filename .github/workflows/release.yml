@@ -35,16 +35,6 @@ jobs:
     - name: Generate changelog
       run: auto-changelog --output CHANGELOG.md
 
-    - name: Create source code archive
-      run: |
-        zip -r src_code.zip . \
-          -x "*.git*" \
-          -x "node_modules/*" \
-          -x ".idea/*" \
-          -x "__pycache__/*" \
-          -x "*.pyc" \
-          -x ".DS_Store" \
-          -x "*.log"
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -58,7 +48,6 @@ jobs:
 
           See [CHANGELOG.md](./CHANGELOG.md) for detailed changes.
         files: |
-          src_code.zip
           CHANGELOG.md
         draft: false
         prerelease: false

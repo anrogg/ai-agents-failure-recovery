@@ -6,9 +6,10 @@ This companion repository evolves with each blog post.
 
 ### Quick Navigation
 
-| Blog Post | Repository Version | Key Files | Demo |
-|-----------|-------------------|-----------|------|
-| **Part 1: "When Perfect Agents Meet Imperfect Reality"** | [`v1.2-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.2-foundation) | [`failure_injector.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/failure_injector.py), [`models.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/models.py) | [`insurance demo`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/demos/insurance/) |
+| Blog Post | Repository Version | Key Files                                                                                                                                                                                                                                                                                                                                                                                                                                     | Demo |
+|-----------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------|
+| **Part 1: "When Perfect Agents Meet Imperfect Reality"** | [`v1.2-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.2-foundation) | [`failure_injector.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/failure_injector.py), [`models.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/models.py)                                                                                                                                                                                                            | [`insurance demo`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/demos/insurance/) |
+| **Part 2: "When AI Agents Lie: Building Truth-Seeking Infrastructure"** | [`v1.3-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.3-foundation) | [`metrics.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/metrics.py), [`routes.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/routes.py), [`docker-compose.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/docker-compose.yml), [`prometheus.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/config/prometheus.yml) | NA |
 
 ### 📖 Blog Post 1: "When Perfect Agents Meet Imperfect Reality: Foundation"
 
@@ -34,9 +35,23 @@ python demos/insurance/run_demo.py
 - [Failure Mode Definitions](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/models.py#L31-L42) (Lines 31-42)
 - [Insurance Demo Impact Calculation](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/demos/insurance/demo.py#L85-L105) (Lines 85-105)
 
-### Blog Post 2: "TBD"
+### 📖 Blog Post 2: "When AI Agents Lie: Building Truth-Seeking Infrastructure"
 
+**Repository State**: [`v1.3-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.3-foundation)
+
+**What You'll Explore**:
+- 🎭 [Prometheus as our agent sidekick](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/config/prometheus.yml) 
+- 📊 [Basic metrics setup](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/metrics.py)
+- 🔍 [New health endpoints for Prometheus to scrape](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/routes.py)
 ---
+
+**Quick Start for Blog Post 2**:
+```bash
+git clone https://github.com/anrogg/ai-agents-failure-recovery
+cd ai-agents-failure-recovery
+git checkout v1.3-foundation
+docker-compose up
+```
 
 ## Always Current: Latest Complete Version
 

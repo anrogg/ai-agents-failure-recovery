@@ -11,6 +11,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - ai-agents-network
 
   postgres:
     image: postgres:15-alpine
@@ -28,6 +30,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - ai-agents-network
 
   agent-service:
     build: .
@@ -50,7 +54,30 @@ services:
     volumes:
       - ./config:/app/config
       - ./logs:/app/logs
+    networks:
+      - ai-agents-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-agents-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - ai-agents-network
 
 volumes:
   redis_data:
   postgres_data:
+
+networks:
+  ai-agents-network:
+    driver: bridge
