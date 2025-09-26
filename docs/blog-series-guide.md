@@ -9,7 +9,7 @@ This companion repository evolves with each blog post.
 | Blog Post | Repository Version | Key Files                                                                                                                                                                                                                                                                                                                                                                                                                                     | Demo |
 |-----------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------|
 | **Part 1: "When Perfect Agents Meet Imperfect Reality"** | [`v1.2-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.2-foundation) | [`failure_injector.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/failure_injector.py), [`models.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/models.py)                                                                                                                                                                                                            | [`insurance demo`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/demos/insurance/) |
-| **Part 2: "When AI Agents Lie: Building Truth-Seeking Infrastructure"** | [`v1.3-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.3-foundation) | [`metrics.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/metrics.py), [`routes.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/routes.py), [`docker-compose.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/docker-compose.yml), [`prometheus.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/config/prometheus.yml) | NA |
+| **Part 2: "When AI Agents Lie: Building Truth-Seeking Infrastructure"** | [`v1.4-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.4-foundation) | [`metrics.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/metrics.py), [`routes.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/routes.py), [`docker-compose.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/docker-compose.yml), [`prometheus.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/config/prometheus.yml) | NA |
 
 ### 📖 Blog Post 1: "When Perfect Agents Meet Imperfect Reality: Foundation"
 
@@ -37,19 +37,19 @@ python demos/insurance/run_demo.py
 
 ### 📖 Blog Post 2: "When AI Agents Lie: Building Truth-Seeking Infrastructure"
 
-**Repository State**: [`v1.3-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.3-foundation)
+**Repository State**: [`v1.4-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.4-foundation)
 
 **What You'll Explore**:
-- 🎭 [Prometheus as our agent sidekick](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/config/prometheus.yml) 
-- 📊 [Basic metrics setup](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/metrics.py)
-- 🔍 [New health endpoints for Prometheus to scrape](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.3-foundation/app/routes.py)
+- 🎭 [Prometheus as our agent sidekick](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/config/prometheus.yml) 
+- 📊 [Basic metrics setup](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/metrics.py)
+- 🔍 [New health endpoints for Prometheus to scrape](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/routes.py)
 ---
 
 **Quick Start for Blog Post 2**:
 ```bash
 git clone https://github.com/anrogg/ai-agents-failure-recovery
 cd ai-agents-failure-recovery
-git checkout v1.3-foundation
+git checkout v1.4-foundation
 docker-compose up
 ```
 
