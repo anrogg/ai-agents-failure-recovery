@@ -86,6 +86,10 @@ This system is designed for **research and testing only**. The deliberate failur
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
+## Development Credits
+
+This project was developed with assistance from Claude (Anthropic's AI assistant) for code implementation and documentation.
+
 ---
 
 **Built for researchers, engineers, and organizations studying AI reliability and failure recovery patterns.**

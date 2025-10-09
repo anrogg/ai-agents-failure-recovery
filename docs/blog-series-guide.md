@@ -6,11 +6,11 @@ This companion repository evolves with each blog post.
 
 ### Quick Navigation
 
-| Blog Post | Repository Version | Key Files                                                                                                                                                                                                                                                                                                                                                                                                                                     | Demo |
-|-----------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------|
-| **Part 1: "When Perfect Agents Meet Imperfect Reality"** | [`v1.2-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.2-foundation) | [`failure_injector.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/failure_injector.py), [`models.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/models.py)                                                                                                                                                                                                            | [`insurance demo`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/demos/insurance/) |
+| Blog Post                                                               | Repository Version                                                                             | Key Files                                                                                                                                                                                                                                                                                                                                                                                                                                     | Demo |
+|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------|
+| **Part 1: "When Perfect Agents Meet Imperfect Reality"**                | [`v1.2-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.2-foundation) | [`failure_injector.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/failure_injector.py), [`models.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/app/models.py)                                                                                                                                                                                                            | [`insurance demo`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.2-foundation/demos/insurance/) |
 | **Part 2: "When AI Agents Lie: Building Truth-Seeking Infrastructure"** | [`v1.4-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.4-foundation) | [`metrics.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/metrics.py), [`routes.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/routes.py), [`docker-compose.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/docker-compose.yml), [`prometheus.yml`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/config/prometheus.yml) | NA |
-
+| **Part 3: "When Good AI Goes Bad: Detecting Quality Output Failures"**  | [`v2.0-monitoring`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v2.0-monitoring) | [`format_strategy.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v2.0-monitoring/app/validation/strategies/format_strategy.py), [`quality_strategy.py`](https://github.com/anrogg/ai-agents-failure-recovery/blob/v2.0-monitoring/app/validation/strategies/quality_strategy.py) | NA |
 ### 📖 Blog Post 1: "When Perfect Agents Meet Imperfect Reality: Foundation"
 
 **Repository State**: [`v1.2-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.2-foundation)
@@ -40,10 +40,9 @@ python demos/insurance/run_demo.py
 **Repository State**: [`v1.4-foundation`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v1.4-foundation)
 
 **What You'll Explore**:
-- 🎭 [Prometheus as our agent sidekick](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/config/prometheus.yml) 
+- 🎭 [Prometheus as our agent sidekick](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/config/prometheus.yml)
 - 📊 [Basic metrics setup](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/metrics.py)
 - 🔍 [New health endpoints for Prometheus to scrape](https://github.com/anrogg/ai-agents-failure-recovery/blob/v1.4-foundation/app/routes.py)
----
 
 **Quick Start for Blog Post 2**:
 ```bash
@@ -52,6 +51,34 @@ cd ai-agents-failure-recovery
 git checkout v1.4-foundation
 docker-compose up
 ```
+
+### 📖 Part 3: "When Good AI Goes Bad: Detecting Quality Output Failures"
+
+**Repository State**: [`v2.0-monitoring`](https://github.com/anrogg/ai-agents-failure-recovery/tree/v2.0-monitoring)
+
+**What You'll Explore**:
+- 🔍 **[Output Validation Framework](https://github.com/anrogg/ai-agents-failure-recovery/blob/v2.0-monitoring/app/validation/core.py)** - Strategy pattern-based validation system
+- 🎯 **[Quality Detection Strategies](https://github.com/anrogg/ai-agents-failure-recovery/tree/v2.0-monitoring/app/validation/strategies)** - Multiple validation approaches for different failure types
+- 📊 **[Validation Metrics Integration](https://github.com/anrogg/ai-agents-failure-recovery/blob/v2.0-monitoring/app/metrics.py#L77-L99)** - Prometheus metrics for validation monitoring
+- 🧪 **[End-to-End Validation Test](https://github.com/anrogg/ai-agents-failure-recovery/blob/v2.0-monitoring/tests/test_validation_e2e.py)** - End-to_end system verification
+
+**Quick Start for Blog Post 3**:
+```bash
+git clone https://github.com/anrogg/ai-agents-failure-recovery
+cd ai-agents-failure-recovery
+git checkout feature/truth-detectors
+export OUTPUT_VALIDATION_ENABLED=true
+export OUTPUT_VALIDATION_LEVEL=content
+python -m app.main
+# Test validation: python tests/test_validation_e2e.py
+```
+
+**Key Code Sections Referenced in Blog**:
+- [ValidationStrategy Interface](https://github.com/anrogg/ai-agents-failure-recovery/blob/feature/truth-detectors/app/validation/core.py#L194-L200) (Lines 194-200)
+- [Quality Scoring Implementation](https://github.com/anrogg/ai-agents-failure-recovery/blob/feature/truth-detectors/app/validation/strategies/quality_strategy.py#L427-L443) (Lines 427-443)
+- [Confidence Calibration Logic](https://github.com/anrogg/ai-agents-failure-recovery/blob/feature/truth-detectors/app/validation/strategies/quality_strategy.py#L604-L620) (Lines 604-620)
+
+---
 
 ## Always Current: Latest Complete Version
 

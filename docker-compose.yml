@@ -46,6 +46,8 @@ services:
       - AI_ENCODING=cl100k_base
       - FAILURE_MODE=normal
       - LOG_LEVEL=INFO
+      - OUTPUT_VALIDATION_ENABLED=true
+      - OUTPUT_VALIDATION_LEVEL=content
     depends_on:
       redis:
         condition: service_healthy

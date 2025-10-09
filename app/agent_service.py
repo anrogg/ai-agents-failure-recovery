@@ -12,6 +12,7 @@ from .failure_injector import FailureInjector
 from .redis_client import StateManager
 from .database import AgentInteraction, get_db_session
 from .metrics import metrics_collector, track_agent_performance
+from .validation import create_standard_validator, ValidationLevel
 
 logger = structlog.get_logger(__name__)
 
@@ -54,6 +55,26 @@ class CustomerServiceAgent:
         except ValueError:
             logger.warning(f"Unknown encoding '{encoding_name}', falling back to cl100k_base")
             self.encoding = tiktoken.get_encoding("cl100k_base")
+
+        # Initialize output validation system
+        validation_enabled = os.getenv("OUTPUT_VALIDATION_ENABLED", "true").lower() == "true"
+        validation_level = os.getenv("OUTPUT_VALIDATION_LEVEL", "content").lower()
+
+        if validation_enabled:
+            self.output_validator = create_standard_validator()
+            # Map string to ValidationLevel enum
+            validation_level_map = {
+                "format": ValidationLevel.FORMAT,
+                "content": ValidationLevel.CONTENT,
+                "semantic": ValidationLevel.SEMANTIC,
+                "expert": ValidationLevel.EXPERT
+            }
+            self.validation_level = validation_level_map.get(validation_level, ValidationLevel.CONTENT)
+            logger.info("Output validation enabled",
+                       level=self.validation_level.value)
+        else:
+            self.output_validator = None
+            logger.info("Output validation disabled")
 
     @track_agent_performance(failure_type="chat_completion")
     async def process_request(self, request: AgentRequest, db_session: AsyncSession) -> AgentResponse:
@@ -229,7 +250,50 @@ class CustomerServiceAgent:
                        response_length=len(response.choices[0].message.content) if response.choices else 0)
             
             agent_response = response.choices[0].message.content
-            
+
+            # Validate the agent response if validation is enabled
+            validation_passed = True
+            validation_warnings = []
+
+            if self.output_validator:
+                try:
+                    validation_context = {
+                        "session_id": request.session_id,
+                        "user_message": request.message,
+                        "conversation_history": agent_state["conversation_history"],
+                        "model": request.model
+                    }
+
+                    validation_result = self.output_validator.validate(
+                        agent_response,
+                        validation_context,
+                        self.validation_level
+                    )
+
+                    validation_passed = validation_result.passed
+                    validation_warnings = validation_result.warnings
+
+                    logger.info("Output validation completed",
+                               session_id=request.session_id,
+                               passed=validation_passed,
+                               confidence=validation_result.confidence,
+                               errors=validation_result.errors,
+                               warnings=validation_warnings)
+
+                    # If validation fails severely, we could optionally retry or flag the response
+                    if not validation_passed and validation_result.confidence < 0.3:
+                        logger.warning("Output validation failed with low confidence",
+                                     session_id=request.session_id,
+                                     errors=validation_result.errors)
+                        # Could implement retry logic here if needed
+
+                except Exception as validation_error:
+                    logger.error("Output validation error",
+                               session_id=request.session_id,
+                               error=str(validation_error))
+                    # Don't fail the request due to validation errors
+                    validation_passed = False
+
             return AgentResponse(
                 session_id=request.session_id,
                 response=agent_response,
@@ -450,3 +514,10 @@ class CustomerServiceAgent:
         await self.state_manager.reset_failure_count(session_id)
         self.failure_injector.reset_session_state(session_id)
         logger.info("Session reset", session_id=session_id)
+
+    def get_validation_stats(self) -> Dict[str, Any]:
+        """Get validation system statistics."""
+        if self.output_validator:
+            return self.output_validator.get_validation_stats()
+        else:
+            return {"validation_enabled": False}
