@@ -357,3 +357,14 @@ async def record_system_metric(
     except Exception as e:
         logger.error("Metric recording error", metric_type=metric.metric_type, error=str(e))
         raise HTTPException(status_code=500, detail=f"Metric error: {str(e)}")
+
+
+@router.get("/validation/stats")
+async def get_validation_stats():
+    """Get output validation system statistics"""
+    try:
+        stats = agent.get_validation_stats()
+        return stats
+    except Exception as e:
+        logger.error("Validation stats error", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Validation stats error: {str(e)}")

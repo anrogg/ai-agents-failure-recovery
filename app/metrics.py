@@ -46,6 +46,31 @@ agent_service_info = Info(
     'Information about the agent service'
 )
 
+# Output validation metrics
+validation_checks_total = Counter(
+    'validation_checks_total',
+    'Total number of validation checks performed',
+    ['validation_level', 'strategy', 'result']  # result: passed/failed
+)
+
+validation_confidence_score = Histogram(
+    'validation_confidence_score',
+    'Distribution of validation confidence scores',
+    ['validation_level']
+)
+
+validation_errors_total = Counter(
+    'validation_errors_total',
+    'Total number of validation errors by type',
+    ['error_type', 'strategy']
+)
+
+validation_processing_duration = Histogram(
+    'validation_processing_duration_seconds',
+    'Time spent on validation processing',
+    ['validation_level']
+)
+
 
 class MetricsCollector:
     def __init__(self):
@@ -69,6 +94,54 @@ class MetricsCollector:
         """Update system health metrics"""
         active_connections.set(db_connections)
         redis_connection_status.set(1 if redis_healthy else 0)
+
+    def record_validation_check(self, validation_level: str, strategy: str,
+                               passed: bool, confidence: float, duration: float,
+                               errors: list = None):
+        """Record validation check metrics"""
+        result = "passed" if passed else "failed"
+
+        # Record the validation check
+        validation_checks_total.labels(
+            validation_level=validation_level,
+            strategy=strategy,
+            result=result
+        ).inc()
+
+        # Record confidence score
+        validation_confidence_score.labels(validation_level=validation_level).observe(confidence)
+
+        # Record processing time
+        validation_processing_duration.labels(validation_level=validation_level).observe(duration)
+
+        # Record specific errors
+        if errors:
+            for error in errors:
+                # Extract error type from error message (simple classification)
+                error_type = self._classify_validation_error(error)
+                validation_errors_total.labels(
+                    error_type=error_type,
+                    strategy=strategy
+                ).inc()
+
+    def _classify_validation_error(self, error_message: str) -> str:
+        """Classify validation errors into types for metrics"""
+        error_lower = error_message.lower()
+
+        if "inappropriate" in error_lower or "profanity" in error_lower:
+            return "inappropriate_content"
+        elif "empty" in error_lower:
+            return "empty_output"
+        elif "quality" in error_lower:
+            return "low_quality"
+        elif "confidence" in error_lower or "overconfident" in error_lower:
+            return "confidence_issue"
+        elif "coherence" in error_lower or "gibberish" in error_lower:
+            return "coherence_issue"
+        elif "format" in error_lower or "structure" in error_lower:
+            return "format_issue"
+        else:
+            return "other"
 
 
 # Global metrics collector instance
