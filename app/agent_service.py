@@ -12,7 +12,8 @@ from .failure_injector import FailureInjector
 from .redis_client import StateManager
 from .database import AgentInteraction, get_db_session
 from .metrics import metrics_collector, track_agent_performance
-from .validation import create_standard_validator, ValidationLevel
+from .validation import create_standard_validator, create_behavioral_aware_validator, ValidationLevel
+from .behavioral.monitoring_service import BehavioralMonitoringService
 
 logger = structlog.get_logger(__name__)
 
@@ -56,16 +57,36 @@ class CustomerServiceAgent:
             logger.warning(f"Unknown encoding '{encoding_name}', falling back to cl100k_base")
             self.encoding = tiktoken.get_encoding("cl100k_base")
 
+        # Initialize behavioral monitoring service
+        behavioral_tracking_enabled = os.getenv("BEHAVIORAL_TRACKING_ENABLED", "true").lower() == "true"
+        if behavioral_tracking_enabled:
+            self.behavioral_monitoring = BehavioralMonitoringService(
+                metrics_collector=metrics_collector
+                # db_session will be passed at runtime in process_request
+            )
+            logger.info("Behavioral monitoring service enabled")
+        else:
+            self.behavioral_monitoring = None
+            logger.info("Behavioral monitoring disabled")
+
         # Initialize output validation system
         validation_enabled = os.getenv("OUTPUT_VALIDATION_ENABLED", "true").lower() == "true"
         validation_level = os.getenv("OUTPUT_VALIDATION_LEVEL", "content").lower()
 
         if validation_enabled:
-            self.output_validator = create_standard_validator()
+            # Use behavioral-aware validator if behavioral tracking is enabled
+            if behavioral_tracking_enabled:
+                self.output_validator = create_behavioral_aware_validator()
+                logger.info("Behavioral-aware validation enabled")
+            else:
+                self.output_validator = create_standard_validator()
+                logger.info("Standard validation enabled")
+
             # Map string to ValidationLevel enum
             validation_level_map = {
                 "format": ValidationLevel.FORMAT,
                 "content": ValidationLevel.CONTENT,
+                "behavioral": ValidationLevel.BEHAVIORAL,
                 "semantic": ValidationLevel.SEMANTIC,
                 "expert": ValidationLevel.EXPERT
             }
@@ -129,7 +150,41 @@ class CustomerServiceAgent:
                 response = natural_response
             
             processing_time = int((time.time() - start_time) * 1000)
-            
+            response.processing_time_ms = processing_time
+
+            # Process behavioral monitoring if enabled
+            if self.behavioral_monitoring:
+                try:
+                    # Set database session in the monitoring service
+                    self.behavioral_monitoring.db_session = db_session
+
+                    # Process complete behavioral monitoring pipeline
+                    monitoring_results = await self.behavioral_monitoring.process_interaction(
+                        session_id=request.session_id,
+                        request=request,
+                        response=response,
+                        start_time=start_time
+                    )
+
+                    logger.info("Behavioral monitoring completed",
+                               session_id=request.session_id,
+                               anomalies_detected=len(monitoring_results["anomaly_results"]["anomalies_detected"]),
+                               overall_anomaly_score=monitoring_results["anomaly_results"]["overall_anomaly_score"],
+                               metrics_recorded=monitoring_results["monitoring_metadata"]["metrics_recorded"],
+                               data_persisted=monitoring_results["monitoring_metadata"]["data_persisted"])
+
+                    # Log any detected anomalies at warning level for operational visibility
+                    if monitoring_results["anomaly_results"]["anomalies_detected"]:
+                        logger.warning("Behavioral anomalies detected",
+                                     session_id=request.session_id,
+                                     anomalies=monitoring_results["anomaly_results"]["anomalies_detected"],
+                                     recommendations=monitoring_results["anomaly_results"]["recommendations"])
+
+                except Exception as e:
+                    logger.error("Behavioral monitoring failed",
+                               session_id=request.session_id,
+                               error=str(e))
+
             # Update agent state
             agent_state["conversation_history"].append({
                 "role": "assistant",
@@ -144,8 +199,8 @@ class CustomerServiceAgent:
             # Log interaction to database
             interaction = AgentInteraction(
                 session_id=request.session_id,
-                request_data=request.dict(),
-                response_data=response.dict(),
+                request_data=request.model_dump(),
+                response_data=response.model_dump(),
                 status=response.status.value,
                 natural_status=response.natural_status.value,
                 failure_mode=failure_mode.value if failure_mode else None,
@@ -182,8 +237,8 @@ class CustomerServiceAgent:
             # Log error interaction
             interaction = AgentInteraction(
                 session_id=request.session_id,
-                request_data=request.dict(),
-                response_data=error_response.dict(),
+                request_data=request.model_dump(),
+                response_data=error_response.model_dump(),
                 status=InteractionStatus.ERROR.value,
                 processing_time_ms=processing_time,
                 token_count=0,
@@ -261,7 +316,10 @@ class CustomerServiceAgent:
                         "session_id": request.session_id,
                         "user_message": request.message,
                         "conversation_history": agent_state["conversation_history"],
-                        "model": request.model
+                        "model": request.model,
+                        "response_start_time": start_time,
+                        "request": request,
+                        "response": None  # Will be set to the final response for behavioral validation
                     }
 
                     validation_result = self.output_validator.validate(

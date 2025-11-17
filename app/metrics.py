@@ -71,6 +71,43 @@ validation_processing_duration = Histogram(
     ['validation_level']
 )
 
+# Behavioral anomaly detection metrics
+behavioral_anomaly_score = Histogram(
+    'behavioral_anomaly_score',
+    'Distribution of behavioral anomaly scores',
+    ['anomaly_type', 'session_type']
+)
+
+interaction_consistency_score = Histogram(
+    'interaction_consistency_score',
+    'Agent interaction consistency over time',
+    ['session_id']
+)
+
+conversation_flow_disruptions = Counter(
+    'conversation_flow_disruptions_total',
+    'Number of conversation flow disruptions detected',
+    ['disruption_type']
+)
+
+behavioral_drift_score = Histogram(
+    'behavioral_drift_score',
+    'Behavioral drift detection scores',
+    ['drift_type', 'time_window']
+)
+
+baseline_establishment_total = Counter(
+    'baseline_establishment_total',
+    'Number of behavioral baselines established',
+    ['session_type']
+)
+
+baseline_update_total = Counter(
+    'baseline_update_total',
+    'Number of behavioral baseline updates',
+    ['update_reason']
+)
+
 
 class MetricsCollector:
     def __init__(self):
@@ -142,6 +179,75 @@ class MetricsCollector:
             return "format_issue"
         else:
             return "other"
+
+    def record_behavioral_anomaly(self, session_id: str, anomaly_type: str,
+                                 score: float, session_type: str = "standard"):
+        """Record behavioral anomaly detection metrics."""
+        behavioral_anomaly_score.labels(
+            anomaly_type=anomaly_type,
+            session_type=session_type
+        ).observe(score)
+
+    def record_interaction_consistency(self, session_id: str, consistency_score: float):
+        """Record interaction consistency metrics."""
+        interaction_consistency_score.labels(session_id=session_id).observe(consistency_score)
+
+    def record_conversation_flow_disruption(self, disruption_type: str):
+        """Record conversation flow disruption."""
+        conversation_flow_disruptions.labels(disruption_type=disruption_type).inc()
+
+    def record_behavioral_drift(self, drift_type: str, drift_score: float, time_window: int):
+        """Record behavioral drift detection."""
+        behavioral_drift_score.labels(
+            drift_type=drift_type,
+            time_window=str(time_window)
+        ).observe(drift_score)
+
+    def record_baseline_establishment(self, session_type: str = "standard"):
+        """Record behavioral baseline establishment."""
+        baseline_establishment_total.labels(session_type=session_type).inc()
+
+    def record_baseline_update(self, update_reason: str):
+        """Record behavioral baseline update."""
+        baseline_update_total.labels(update_reason=update_reason).inc()
+
+    def increment_counter(self, metric_name: str, labels: dict = None):
+        """Generic counter increment method for behavioral monitoring."""
+        if labels is None:
+            labels = {}
+
+        if metric_name == 'interaction_total':
+            # Map to existing validation counter with behavioral type
+            validation_checks_total.labels(
+                validation_level='behavioral',
+                strategy='behavioral_monitoring',
+                result='passed'
+            ).inc()
+        elif metric_name == 'conversation_flow_disruptions_total':
+            disruption_type = labels.get('disruption_type', 'unknown')
+            conversation_flow_disruptions.labels(disruption_type=disruption_type).inc()
+
+    def observe_histogram(self, metric_name: str, value: float, labels: dict = None):
+        """Generic histogram observation method for behavioral monitoring."""
+        if labels is None:
+            labels = {}
+
+        if metric_name == 'interaction_latency':
+            behavioral_anomaly_score.labels(
+                anomaly_type='response_latency',
+                session_type='behavioral'
+            ).observe(value)
+        elif metric_name == 'message_length_histogram':
+            behavioral_anomaly_score.labels(
+                anomaly_type='message_length',
+                session_type='behavioral'
+            ).observe(value)
+        elif metric_name == 'interaction_consistency_score':
+            session_id = labels.get('session_id', 'unknown')
+            behavioral_anomaly_score.labels(
+                anomaly_type='consistency',
+                session_type=session_id
+            ).observe(value)
 
 
 # Global metrics collector instance

@@ -38,16 +38,24 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - REDIS_URL=redis://redis:6379
+      # AI Configuration (from .env)
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_BASE_URL=${AI_BASE_URL:-https://api.openai.com/v1}
+      - AI_MODEL=${AI_MODEL:-gpt-3.5-turbo}
+      - AI_ENCODING=${AI_ENCODING:-cl100k_base}
+
+      # Application Configuration (from .env with defaults)
+      - PROBABILISTIC_FAILURES=${PROBABILISTIC_FAILURES:-false}
+      - FAILURE_RATE_MULTIPLIER=${FAILURE_RATE_MULTIPLIER:-1.0}
+      - BEHAVIORAL_TRACKING_ENABLED=${BEHAVIORAL_TRACKING_ENABLED:-true}
+      - OUTPUT_VALIDATION_ENABLED=${OUTPUT_VALIDATION_ENABLED:-true}
+      - OUTPUT_VALIDATION_LEVEL=${OUTPUT_VALIDATION_LEVEL:-behavioral}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-false}
+
+      # Infrastructure (container-specific URLs)
+      - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=postgresql://agent_user:agent_password@postgres:5432/agent_failures
-      - AI_API_KEY=<AI_API_KEY_PLACEHOLDER>
-      - AI_BASE_URL=<AI_BASE_URL_PLACEHOLDER>
-      - AI_MODEL=<AI_MODEL_PLACEHOLDER>
-      - AI_ENCODING=cl100k_base
-      - FAILURE_MODE=normal
-      - LOG_LEVEL=INFO
-      - OUTPUT_VALIDATION_ENABLED=true
-      - OUTPUT_VALIDATION_LEVEL=content
     depends_on:
       redis:
         condition: service_healthy

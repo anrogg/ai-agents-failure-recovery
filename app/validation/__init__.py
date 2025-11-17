@@ -14,7 +14,8 @@ from .core import (
 )
 from .setup import (
     create_standard_validator,
-    create_custom_validator
+    create_custom_validator,
+    create_behavioral_aware_validator
 )
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     "OutputValidator",
     "validate_output",
     "create_standard_validator",
-    "create_custom_validator"
+    "create_custom_validator",
+    "create_behavioral_aware_validator"
 ]

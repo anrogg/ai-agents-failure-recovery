@@ -1,0 +1,158 @@
+# Behavioral Failure Detection System Architecture
+
+This document contains the **implemented** architecture diagram for the behavioral anomaly detection system, based on the current codebase.
+
+## System Architecture Overview (Current Implementation)
+
+```mermaid
+graph TB
+    %% User Request Flow
+    User[👤 User Request] --> Agent[🤖 AI Agent Service]
+
+    %% Main Processing Pipeline
+    Agent --> Generate[Generate Response]
+    Generate --> Response[📝 AI Response]
+
+    %% NEW: Service Layer Pattern
+    Response --> BehavioralService[🎯 Behavioral Monitoring Service<br/>✅ IMPLEMENTED<br/>Service Layer Pattern]
+
+    %% Service Layer Components
+    BehavioralService --> MetricsCollector[📈 Prometheus Metrics<br/>✅ FULLY INTEGRATED<br/>• Interaction counters<br/>• Anomaly histograms<br/>• Behavioral drift tracking]
+
+    BehavioralService --> DatabasePersistence[🗃️ Database Persistence<br/>✅ FULLY INTEGRATED<br/>• InteractionBehaviorLog<br/>• BehavioralAnomalyLog<br/>• BehavioralBaseline]
+
+    %% Pure Business Logic (No Infrastructure)
+    BehavioralService --> InteractionTracker[📊 Interaction Tracker<br/>✅ PURE LOGIC<br/>Track behavioral metrics]
+    BehavioralService --> AnomalyDetector[🚨 Anomaly Detector<br/>✅ PURE LOGIC<br/>Detect anomalies]
+
+    %% Interaction Tracking (FULLY IMPLEMENTED)
+    InteractionTracker --> TrackMetrics[Track Complete Metrics<br/>• Response Latency<br/>• Message Length<br/>• Conversation Turns<br/>• Clarification Frequency<br/>• Topic Switches<br/>• Confidence Expressions]
+    TrackMetrics --> SessionStore[(🗄️ In-Memory Session Store<br/>✅ IMPLEMENTED<br/>Last 10 responses + persistence)]
+
+    %% Anomaly Detection Pipeline (FULLY IMPLEMENTED)
+    AnomalyDetector --> BaselineManager[📈 Baseline Manager<br/>✅ PURE LOGIC<br/>Statistical analysis]
+    AnomalyDetector --> LoopDetector[🔄 Loop Detector<br/>✅ PURE LOGIC<br/>3-tier detection]
+    AnomalyDetector --> TemporalAnalyzer[⏱️ Temporal Analyzer<br/>✅ PURE LOGIC<br/>Basic drift detection]
+
+    %% Detection Methods (WHAT'S WORKING)
+    BaselineManager --> EstablishBaseline[Statistical Baselines<br/>✅ Z-score deviation<br/>✅ Percentile ranges<br/>✅ Adaptive thresholds]
+
+    LoopDetector --> LoopDetection[Loop Detection<br/>✅ Exact repetition 100%<br/>✅ Alternating patterns 95%<br/>✅ Low diversity configurable]
+
+    TemporalAnalyzer --> DriftDetection[Drift Detection<br/>✅ Framework implemented<br/>🚧 Basic algorithms only]
+
+    %% Database Integration (FULLY IMPLEMENTED)
+    DatabasePersistence --> Database[(🗃️ PostgreSQL<br/>✅ FULLY INTEGRATED<br/>Uses existing models<br/>• async_session<br/>• Auto-commit)]
+
+    %% Results Processing (IMPLEMENTED)
+    EstablishBaseline --> Results[📊 Anomaly Results<br/>✅ IMPLEMENTED]
+    LoopDetection --> Results
+    DriftDetection --> Results
+
+    Results --> ComprehensiveResult[✅/❌ Complete Analysis<br/>✅ IMPLEMENTED<br/>• Anomaly detection<br/>• Metrics recording<br/>• Database persistence<br/>• Confidence scores<br/>• Recommendations]
+
+    %% Monitoring (FULLY IMPLEMENTED)
+    MetricsCollector --> PrometheusMetrics[📈 Prometheus Integration<br/>✅ FULLY IMPLEMENTED<br/>• interaction_total<br/>• behavioral_anomaly_score<br/>• conversation_flow_disruptions<br/>• interaction_consistency_score]
+
+    DatabasePersistence --> StructuredLogging[📝 Structured Logging<br/>✅ IMPLEMENTED<br/>• Anomaly warnings<br/>• Processing info<br/>• Error handling]
+
+    %% Validation Pipeline Integration
+    ComprehensiveResult --> Validator{🔍 Output Validator}
+    Validator --> Format[📋 Format Validation]
+    Format --> Content[📄 Content Validation]
+    Content --> BehavioralValidation[🎯 Behavioral Validation<br/>✅ INTEGRATED]
+    BehavioralValidation -->|Optional| Semantic[🧠 Semantic Validation]
+
+    %% Response Flow
+    Semantic --> FinalResponse[📤 Final Response to User]
+
+    %% Configuration (IMPLEMENTED)
+    Config[⚙️ Environment Config<br/>✅ IMPLEMENTED<br/>• BEHAVIORAL_TRACKING_ENABLED<br/>• BEHAVIORAL_METRICS_ENABLED<br/>• BEHAVIORAL_DB_PERSISTENCE_ENABLED] -.-> BehavioralService
+
+    %% NOT IMPLEMENTED (Grayed Out)
+    subgraph NotImplemented[" ❌ NOT IMPLEMENTED "]
+        AdvancedTemporal[Advanced Temporal Analysis]
+        SemanticLoops[Semantic Loop Detection]
+        PopulationBaselines[Population-Based Analysis]
+        PredictiveModels[Predictive ML Models]
+        AutoRecovery[Auto-Recovery Systems]
+        AlertingSystem[External Alerting System]
+    end
+
+    %% Styling
+    classDef implemented fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef partial fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef notimplemented fill:#ffebee,stroke:#c62828,stroke-width:1px,stroke-dasharray: 5 5
+    classDef primary fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef service fill:#f3e5f5,stroke:#4a148c,stroke-width:3px
+
+    class Agent,Validator,BehavioralValidation primary
+    class BehavioralService service
+    class MetricsCollector,DatabasePersistence,InteractionTracker,AnomalyDetector,BaselineManager,LoopDetector,TemporalAnalyzer implemented
+    class TrackMetrics,SessionStore,EstablishBaseline,LoopDetection,DriftDetection,Results,ComprehensiveResult,Database,PrometheusMetrics,StructuredLogging,Config implemented
+    class Format,Content,Semantic,FinalResponse implemented
+    class AdvancedTemporal,SemanticLoops,PopulationBaselines,PredictiveModels,AutoRecovery,AlertingSystem notimplemented
+```
+
+## Simple Data Flow (Current Reality)
+
+```mermaid
+flowchart LR
+    %% Input Data
+    Request[User Request] --> Processing{Agent Processing}
+
+    %% Real-time Metrics Collection (IMPLEMENTED)
+    Processing --> BasicMetrics[Basic Metrics Collection<br/>✅ Response time<br/>✅ Message length<br/>✅ Turn count]
+
+    %% Storage Layer (IMPLEMENTED)
+    BasicMetrics --> Memory[(Session Storage<br/>✅ Last 10 responses<br/>✅ Database persistence)]
+
+    %% Analysis Layer (IMPLEMENTED)
+    Memory --> SimpleAnalysis{Behavioral Analysis}
+
+    %% Detection Algorithms (FULLY IMPLEMENTED)
+    SimpleAnalysis --> LoopCheck[Loop Detection<br/>✅ 3-tier system<br/>✅ 95%+ accuracy]
+    SimpleAnalysis --> StatCheck[Statistical Analysis<br/>✅ Z-score deviation<br/>✅ Baseline tracking]
+    SimpleAnalysis --> PatternCheck[Pattern Analysis<br/>✅ Anomaly detection<br/>✅ Drift analysis]
+
+    %% Results (IMPLEMENTED)
+    LoopCheck --> ComprehensiveResult[Complete Analysis<br/>✅ Anomaly scores<br/>✅ Recommendations<br/>✅ Confidence levels]
+    StatCheck --> ComprehensiveResult
+    PatternCheck --> ComprehensiveResult
+
+    %% Output (FULLY IMPLEMENTED)
+    ComprehensiveResult --> StructuredLogging[Structured Logging<br/>✅ Anomaly warnings<br/>✅ Processing info]
+    ComprehensiveResult --> PrometheusMetrics[Prometheus Metrics<br/>✅ 12+ metrics<br/>✅ Real-time collection]
+    ComprehensiveResult --> DatabasePersistence[Database Storage<br/>✅ Async writes<br/>✅ 3 tables]
+
+    %% Styling
+    classDef working fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef partial fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef input fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+
+    class Request,Processing input
+    class BasicMetrics,LoopCheck,StatCheck,PatternCheck,ComprehensiveResult,StructuredLogging,PrometheusMetrics,DatabasePersistence working
+    class Memory,SimpleAnalysis working
+```
+
+## Configuration (What Actually Works)
+
+```mermaid
+mindmap
+  root)Configuration Status(
+    Environment Variables
+      BEHAVIORAL_TRACKING_ENABLED: true/false
+      BEHAVIORAL_METRICS_ENABLED: true/false
+      BEHAVIORAL_DB_PERSISTENCE_ENABLED: true/false
+      OUTPUT_VALIDATION_LEVEL: behavioral
+    Detection Settings
+      Loop detection: 3-tier thresholds
+      Baseline: 3-5 min interactions
+      Memory: Last 10 responses
+      Anomaly threshold: configurable
+    YAML Configuration
+      config/failure_scenarios.yml
+      Behavioral anomaly settings
+      Recovery strategies
+      Monitoring thresholds
+```

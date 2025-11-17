@@ -21,6 +21,7 @@ class ValidationLevel(Enum):
     """Validation levels in order of cost/complexity."""
     FORMAT = "format"
     CONTENT = "content"
+    BEHAVIORAL = "behavioral"
     SEMANTIC = "semantic"
     EXPERT = "expert"
 
@@ -52,6 +53,7 @@ class OutputValidator:
         self.strategies = {
             ValidationLevel.FORMAT: [],
             ValidationLevel.CONTENT: [],
+            ValidationLevel.BEHAVIORAL: [],
             ValidationLevel.SEMANTIC: [],
             ValidationLevel.EXPERT: []
         }
@@ -80,7 +82,7 @@ class OutputValidator:
 
         # Run strategies in order of cost
         validation_levels = [ValidationLevel.FORMAT, ValidationLevel.CONTENT,
-                           ValidationLevel.SEMANTIC, ValidationLevel.EXPERT]
+                           ValidationLevel.BEHAVIORAL, ValidationLevel.SEMANTIC, ValidationLevel.EXPERT]
 
         for level in validation_levels:
             # Convert enum to comparable value for ordering
@@ -154,8 +156,9 @@ class OutputValidator:
         level_order = {
             ValidationLevel.FORMAT: 1,
             ValidationLevel.CONTENT: 2,
-            ValidationLevel.SEMANTIC: 3,
-            ValidationLevel.EXPERT: 4
+            ValidationLevel.BEHAVIORAL: 3,
+            ValidationLevel.SEMANTIC: 4,
+            ValidationLevel.EXPERT: 5
         }
         return level_order[level]
 

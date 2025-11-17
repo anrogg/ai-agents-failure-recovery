@@ -19,6 +19,10 @@ from .strategies.quality_strategy import (
     ConfidenceValidationStrategy,
     QualityScorer
 )
+from .strategies.behavioral_anomaly_strategy import (
+    BehavioralAnomalyStrategy,
+    InteractionConsistencyStrategy
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -76,4 +80,36 @@ def create_custom_validator(strategies: Dict[ValidationLevel, List]) -> OutputVa
     logger.info("Created custom validator",
                levels=list(strategies.keys()),
                total_strategies=sum(len(strategies) for strategies in strategies.values()))
+    return validator
+
+
+def create_behavioral_aware_validator() -> OutputValidator:
+    """Create a validator with behavioral anomaly detection capabilities."""
+    validator = OutputValidator()
+    quality_scorer = QualityScorer()
+
+    # Existing strategies (unchanged)
+    validator.register_strategy(ValidationLevel.FORMAT, FormatValidationStrategy())
+    validator.register_strategy(ValidationLevel.CONTENT, CustomerServiceValidationStrategy())
+    validator.register_strategy(ValidationLevel.CONTENT, ResponseCoherenceStrategy())
+    validator.register_strategy(ValidationLevel.CONTENT, QualityValidationStrategy(quality_scorer))
+    validator.register_strategy(ValidationLevel.CONTENT, ConfidenceValidationStrategy())
+
+    # Behavioral strategies
+    validator.register_strategy(ValidationLevel.BEHAVIORAL, BehavioralAnomalyStrategy())
+    validator.register_strategy(ValidationLevel.BEHAVIORAL, InteractionConsistencyStrategy())
+
+    logger.info("Created behavioral-aware validator with anomaly detection")
+    return validator
+
+
+def create_behavioral_only_validator() -> OutputValidator:
+    """Create a validator focused only on behavioral anomaly detection."""
+    validator = OutputValidator()
+
+    # Only behavioral strategies
+    validator.register_strategy(ValidationLevel.BEHAVIORAL, BehavioralAnomalyStrategy())
+    validator.register_strategy(ValidationLevel.BEHAVIORAL, InteractionConsistencyStrategy())
+
+    logger.info("Created behavioral-only validator")
     return validator

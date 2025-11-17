@@ -208,3 +208,6 @@ __marimo__/
 
 # IDE files
 .idea/
+
+# Unused configuration file until implemented
+config/failure_scenarios.yml

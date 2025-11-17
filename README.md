@@ -26,6 +26,11 @@ This system deliberately injects 11 different types of failures into AI agents t
 # Clone and start the system
 git clone https://github.com/anrogg/ai-agents-failure-recovery
 cd ai-agents-failure-recovery
+
+# Setup environment variables
+cp .envdefault .env
+
+# Start all services
 docker-compose up --build
 
 # Run the insurance customer support demo
@@ -34,6 +39,8 @@ python demos/insurance/run_demo.py
 # View API documentation
 open http://localhost:8000/docs
 ```
+
+**Environment Setup**: The `.env` file contains important configuration for behavioral tracking, validation, and failure injection. Copy from `.envdefault` and modify as needed.
 
 ## Documentation
 

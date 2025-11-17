@@ -1,0 +1,26 @@
+# AI Configuration
+AI_API_KEY=your-openai-api-key-here
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-3.5-turbo
+AI_ENCODING=cl100k_base
+
+# Application Configuration
+PROBABILISTIC_FAILURES=false
+FAILURE_RATE_MULTIPLIER=1.0
+
+# Behavioral Tracking Configuration
+BEHAVIORAL_TRACKING_ENABLED=true
+
+# Output Validation Configuration
+OUTPUT_VALIDATION_ENABLED=true
+OUTPUT_VALIDATION_LEVEL=behavioral
+
+# Database Configuration
+DATABASE_URL=postgresql://agent_user:agent_password@db:5432/agent_failures
+
+# Redis Configuration
+REDIS_URL=redis://redis:6379/0
+
+# Application Settings
+LOG_LEVEL=INFO
+DEBUG=false

@@ -73,7 +73,7 @@ class AgentStateSnapshot(Base):
 
 class SystemMetric(Base):
     __tablename__ = "system_metrics"
-    
+
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     metric_type = Column(String(100), nullable=False, index=True)
@@ -81,6 +81,75 @@ class SystemMetric(Base):
     threshold_value = Column(Numeric(10,2))
     exceeded_threshold = Column(Boolean, default=False, index=True)
     metric_metadata = Column(JSON)
+
+
+class InteractionBehaviorLog(Base):
+    __tablename__ = "interaction_behaviors"
+
+    id = Column(Integer, primary_key=True)
+    session_id = Column(String(255), nullable=False, index=True)
+    interaction_id = Column(Integer)  # Foreign key to agent_interactions
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    # Behavioral metrics
+    response_latency_ms = Column(Integer, nullable=False)
+    message_length = Column(Integer, nullable=False)
+    conversation_turns = Column(Integer, nullable=False)
+    clarification_frequency = Column(Numeric(5,3), nullable=False)
+    topic_switches = Column(Integer, nullable=False)
+    confidence_expressions = Column(Integer, nullable=False)
+
+    # Anomaly detection results
+    anomaly_score = Column(Numeric(5,3))
+    baseline_deviation = Column(Numeric(5,3))
+    drift_score = Column(Numeric(5,3))
+
+    # Metadata
+    interaction_metadata = Column(JSON)
+
+
+class BehavioralBaseline(Base):
+    __tablename__ = "behavioral_baselines"
+
+    id = Column(Integer, primary_key=True)
+    session_id = Column(String(255), unique=True, nullable=False, index=True)
+
+    # Baseline metrics
+    avg_response_latency = Column(Numeric(10,2), nullable=False)
+    typical_message_length_min = Column(Integer, nullable=False)
+    typical_message_length_max = Column(Integer, nullable=False)
+    normal_clarification_rate = Column(Numeric(5,3), nullable=False)
+    standard_conversation_depth = Column(Integer, nullable=False)
+    confidence_pattern = Column(JSON, nullable=False)
+
+    # Metadata
+    interaction_count = Column(Integer, nullable=False)
+    established_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class BehavioralAnomalyLog(Base):
+    __tablename__ = "behavioral_anomalies"
+
+    id = Column(Integer, primary_key=True)
+    session_id = Column(String(255), nullable=False, index=True)
+    interaction_id = Column(Integer)  # Foreign key to agent_interactions
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    # Anomaly details
+    anomaly_type = Column(String(100), nullable=False, index=True)
+    anomaly_score = Column(Numeric(5,3), nullable=False)
+    confidence = Column(Numeric(5,3), nullable=False)
+
+    # Detection details
+    detection_method = Column(String(100), nullable=False)
+    contributing_factors = Column(JSON)
+    recommendations = Column(JSON)
+
+    # Resolution
+    resolved = Column(Boolean, default=False, index=True)
+    resolution_notes = Column(Text)
+    resolved_at = Column(DateTime(timezone=True))
 
 
 async def init_db():
