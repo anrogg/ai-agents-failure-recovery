@@ -13,7 +13,136 @@ on:
         type: string
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate .env file from secrets and defaults
+      run: |
+        # Start with .envdefault as base
+        cp .envdefault .env
+
+        # Replace secret placeholders with actual values
+        sed -i 's/AI_API_KEY=.*/AI_API_KEY=${{ secrets.AI_API_KEY }}/' .env
+        sed -i 's/AI_BASE_URL=.*/AI_BASE_URL=${{ secrets.AI_BASE_URL }}/' .env
+        sed -i 's/AI_MODEL=.*/AI_MODEL=${{ secrets.AI_MODEL }}/' .env
+
+        echo "✅ Generated .env file with secrets"
+
+    - name: Build and start services
+      run: |
+        echo "🚀 Starting services..."
+        docker-compose up --build -d
+        echo "⏳ Waiting for services to be ready..."
+        sleep 30
+        docker-compose ps
+
+    - name: Run test suite
+      id: tests
+      continue-on-error: true
+      run: |
+        echo "🧪 Running test suite..."
+        # Run tests and capture output
+        docker-compose exec -T agent-service python /app/tests/run_all_tests.py > test_results.txt 2>&1
+        test_exit_code=$?
+
+        # Display results
+        cat test_results.txt
+
+        # Save exit code for later use
+        echo "exit_code=$test_exit_code" >> $GITHUB_OUTPUT
+
+        exit $test_exit_code
+
+    - name: Generate test report
+      if: always()
+      run: |
+        echo "📊 Generating test report..."
+
+        # Create test report
+        cat << 'EOF' > TEST_REPORT.md
+        # Test Report for ${{ inputs.tag_name }}
+
+        **Generated on:** $(date)
+        **Tag:** ${{ inputs.tag_name }}
+        **Repository:** ${{ github.repository }}
+        **Commit:** ${{ github.sha }}
+
+        EOF
+
+        if [ -f test_results.txt ]; then
+          if grep -q "ALL TESTS PASSED" test_results.txt; then
+            echo "## ✅ Test Results: PASSED" >> TEST_REPORT.md
+            echo "" >> TEST_REPORT.md
+            echo "All tests executed successfully! The release is ready to proceed." >> TEST_REPORT.md
+          else
+            echo "## ❌ Test Results: FAILED" >> TEST_REPORT.md
+            echo "" >> TEST_REPORT.md
+            echo "Some tests failed. Please review the test output below:" >> TEST_REPORT.md
+          fi
+
+          # Add test statistics
+          echo "" >> TEST_REPORT.md
+          echo "### Test Statistics:" >> TEST_REPORT.md
+
+          if grep -q "passed" test_results.txt; then
+            passed=$(grep -o "[0-9]* passed" test_results.txt | head -1 | cut -d' ' -f1)
+            echo "- ✅ Tests Passed: $passed" >> TEST_REPORT.md
+          fi
+
+          if grep -q "failed" test_results.txt; then
+            failed=$(grep -o "[0-9]* failed" test_results.txt | head -1 | cut -d' ' -f1)
+            echo "- ❌ Tests Failed: $failed" >> TEST_REPORT.md
+          fi
+
+          if grep -q "warning" test_results.txt; then
+            warnings=$(grep -o "[0-9]* warning" test_results.txt | head -1 | cut -d' ' -f1)
+            echo "- ⚠️ Warnings: $warnings" >> TEST_REPORT.md
+          fi
+
+          # Add full test output
+          echo "" >> TEST_REPORT.md
+          echo "### Full Test Output:" >> TEST_REPORT.md
+          echo "\`\`\`" >> TEST_REPORT.md
+          cat test_results.txt >> TEST_REPORT.md
+          echo "\`\`\`" >> TEST_REPORT.md
+        else
+          echo "## ❌ Test Results: ERROR" >> TEST_REPORT.md
+          echo "" >> TEST_REPORT.md
+          echo "No test output found. There may have been an error running the tests." >> TEST_REPORT.md
+        fi
+
+        echo "📄 Test report generated"
+
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ inputs.tag_name }}
+        path: |
+          test_results.txt
+          TEST_REPORT.md
+        retention-days: 30
+
+    - name: Stop services
+      if: always()
+      run: |
+        echo "🛑 Stopping services..."
+        docker-compose down
+
+    - name: Fail job if tests failed
+      if: steps.tests.outputs.exit_code != '0'
+      run: |
+        echo "❌ Tests failed! Cannot proceed with release."
+        exit 1
+
   release:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -35,6 +164,10 @@ jobs:
     - name: Generate changelog
       run: auto-changelog --output CHANGELOG.md
 
+    - name: Download test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: test-results-${{ inputs.tag_name }}
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -44,11 +177,17 @@ jobs:
         body: |
           ${{ inputs.description }}
 
-          ## Changelog
+          ## ✅ Test Results
+          All tests passed successfully before this release was created.
 
+          ## Changelog
           See [CHANGELOG.md](./CHANGELOG.md) for detailed changes.
+
+          ## Test Report
+          Detailed test results are attached to this release as `TEST_REPORT.md`.
         files: |
           CHANGELOG.md
+          TEST_REPORT.md
         draft: false
         prerelease: false
       env:
