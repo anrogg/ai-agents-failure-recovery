@@ -77,7 +77,7 @@ jobs:
 
         if [ -f test_results.txt ]; then
           if grep -q "ALL TESTS PASSED" test_results.txt; then
-            echo "## ✅ Test Results: PASSED" >> TEST_REPORT.md
+            echo "## ✅  Test Results: PASSED" >> TEST_REPORT.md
             echo "" >> TEST_REPORT.md
             echo "All tests executed successfully! The release is ready to proceed." >> TEST_REPORT.md
           else
